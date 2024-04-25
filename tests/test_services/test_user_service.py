@@ -198,3 +198,33 @@ async def test_verify_email_with_expired_token(db_session, user):
     await db_session.commit()
     result = await UserService.verify_email_with_token(db_session, user.id, expired_token)
     assert result is True
+
+async def test_update_user_password(db_session, user):
+    new_password = "NewPassword123!"
+    updated_user = await UserService.update(db_session, user.id, {"password": new_password})
+    assert updated_user is not None
+    # Add assertions to verify password update logic
+
+async def test_create_first_user_admin_role(db_session, email_service):
+    # Assuming the database is initially empty
+    user_data = {
+        "nickname": generate_nickname(),
+        "email": "first_admin@example.com",
+        "password": "FirstAdmin123!",
+        "role": UserRole.ADMIN.name
+    }
+    user = await UserService.create(db_session, user_data, email_service)
+    assert user is not None
+    assert user.role == UserRole.ADMIN
+
+async def test_verify_email_with_invalid_token(db_session, user):
+    incorrect_token = "incorrect_token_example"
+    user.verification_token = "valid_token_example"  # Set a valid token first
+    await db_session.commit()
+    result = await UserService.verify_email_with_token(db_session, user.id, incorrect_token)
+    assert result is False
+
+async def test_list_users_skip_exceeds_total_users(db_session, users_with_same_role_50_users):
+    total_users = await UserService.count(db_session)
+    users = await UserService.list_users(db_session, skip=total_users + 1, limit=10)
+    assert len(users) == 0  # No users should be returned
