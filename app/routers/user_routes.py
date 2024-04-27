@@ -38,6 +38,7 @@ from typing import Optional
 from fastapi import Query
 from datetime import datetime
 from app.schemas.user_schemas import UserListResponse
+from app.dependencies import require_role_admin
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
@@ -264,7 +265,8 @@ async def search_users(
     registration_date_to: Optional[datetime] = Query(None, description="End of registration date range"),
     skip: int = Query(0, description="Number of records to skip"),
     limit: int = Query(10, description="Maximum number of records to return"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: dict = Depends(require_role_admin)  # Ensure only admin can access
 ):
     total_users = await UserService.count(db)
 
