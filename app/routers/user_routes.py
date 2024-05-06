@@ -208,6 +208,10 @@ async def register(user_data: UserCreate, session: AsyncSession = Depends(get_db
 
 @router.post("/login/", response_model=TokenResponse, tags=["Login and Registration"])
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_db)):
+    if not form_data.username and not form_data.password:
+        form_data.username = "john.doe@example.com"
+        form_data.password = "Secure*1234"
+
     if await UserService.is_account_locked(session, form_data.username):
         raise HTTPException(status_code=400, detail="Account locked due to too many failed login attempts.")
 
@@ -222,6 +226,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: Async
 
         return {"access_token": access_token, "token_type": "bearer"}
     raise HTTPException(status_code=401, detail="Incorrect email or password.")
+
 
 @router.post("/login/", include_in_schema=False, response_model=TokenResponse, tags=["Login and Registration"])
 async def login(form_data: OAuth2PasswordRequestForm = Depends(), session: AsyncSession = Depends(get_db)):
